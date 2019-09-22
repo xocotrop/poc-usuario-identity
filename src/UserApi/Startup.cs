@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System;
+using UserApi.Security;
 using UserData;
 using UserData.AppContext;
 
@@ -24,15 +26,35 @@ namespace UserApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<UserDataContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("User")));
-            services.AddIdentityCore<ApplicationUser>()
-                .AddRoles<IdentityRole<Guid>>()
-                .AddEntityFrameworkStores<UserDataContext>();
+            services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
+                // .AddRoles<IdentityRole<Guid>>()
+                .AddEntityFrameworkStores<UserDataContext>()
+                .AddSignInManager()
+                .AddDefaultTokenProviders();
 
             services.Configure<IdentityOptions>(opt =>
             {
                 opt.Password.RequireDigit = true;
                 opt.User.RequireUniqueEmail = true;
             });
+
+
+            services.AddScoped<AccessManager>();
+
+            var signingConfigurations = new SigningConfigurations();
+            services.AddSingleton(signingConfigurations);
+
+
+            var tokenConfigurations = new TokenConfigurations();
+            new ConfigureFromConfigurationOptions<TokenConfigurations>(
+                Configuration.GetSection("TokenConfigurations"))
+                    .Configure(tokenConfigurations);
+            services.AddSingleton(tokenConfigurations);
+
+            // Aciona a extensão que irá configurar o uso de
+            // autenticação e autorização via tokens
+            services.AddJwtSecurity(
+                signingConfigurations, tokenConfigurations);
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
@@ -52,11 +74,13 @@ namespace UserApi
 
             using (var sp = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
-                using(var ctx = sp.ServiceProvider.GetRequiredService<UserDataContext>())
+                using (var ctx = sp.ServiceProvider.GetRequiredService<UserDataContext>())
                 {
                     ctx.Database.Migrate();
                 }
             }
+
+            app.UseAuthentication();
 
             app.UseHttpsRedirection();
             app.UseMvc();
