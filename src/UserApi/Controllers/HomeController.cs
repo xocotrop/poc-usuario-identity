@@ -12,6 +12,13 @@ namespace UserApi.Controllers
 
         }
 
+        [HttpGet("2")]
+        [Authorize("Permissions.Geral.ReadAdmin")]
+        public IActionResult Get2()
+        {
+            return Ok(new { OK = "OK" });
+        }
+
         [HttpGet]
         [Authorize(Roles = "Admin,Broker")]
         public IActionResult Get()

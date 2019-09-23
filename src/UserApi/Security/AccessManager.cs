@@ -1,5 +1,6 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
 using Microsoft.AspNetCore.Identity;
@@ -44,6 +45,7 @@ namespace UserApi.Security
                         .Result;
                     if (resultadoLogin.Succeeded)
                     {
+                        return true;
                         // Verifica se o usuário em questão possui
                         // a role Acesso-APIProdutos
                         credenciaisValidas = _userManager.IsInRoleAsync(
@@ -57,12 +59,14 @@ namespace UserApi.Security
 
         public Token GenerateToken(User user)
         {
+            var _user =  _userManager.FindByNameAsync(user.UserID).Result;
+            var userRoles = _userManager.GetRolesAsync(_user).Result;
             ClaimsIdentity identity = new ClaimsIdentity(
                 new GenericIdentity(user.UserID, "Login"),
                 new[] {
                         new Claim("ID", Guid.NewGuid().ToString("N")),
-                        new Claim(ClaimTypes.NameIdentifier, user.UserID),
-                        new Claim(ClaimTypes.Role, "Admin")
+                        new Claim(ClaimTypes.NameIdentifier, _user.Id.ToString()),
+                        new Claim(ClaimTypes.Role, userRoles.FirstOrDefault())
                 }
             );
 

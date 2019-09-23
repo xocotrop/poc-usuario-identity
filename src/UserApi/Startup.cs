@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
+using UserApi.Policies;
 using UserApi.Security;
 using UserData;
 using UserData.AppContext;
@@ -38,6 +40,19 @@ namespace UserApi
                 opt.User.RequireUniqueEmail = true;
             });
 
+            services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+            // services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("Permissions.Geral.ReadAdmin", builder =>
+                {
+                    builder.AddRequirements(new PermissionRequirement("Permissions.Geral.Read"));
+                    builder.RequireRole("Admin");
+                });
+
+
+                // The rest omitted for brevity.
+            });
 
             services.AddScoped<AccessManager>();
 
