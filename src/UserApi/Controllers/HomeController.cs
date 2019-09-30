@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 
 namespace UserApi.Controllers
 {
@@ -12,7 +13,21 @@ namespace UserApi.Controllers
 
         }
 
+        [HttpGet("ListPolicies")]
+        [Authorize("ViewPolicies")]
+        public IActionResult ListPolicies()
+        {
+            var list = new List<string>
+            {
+                "1",
+                "2",
+                "3"
+            };
+            return Ok(list);
+        }
+
         [HttpGet("2")]
+        [Authorize(Policy = "Broker")]
         [Authorize("Permissions.Geral.ReadAdmin")]
         public IActionResult Get2()
         {

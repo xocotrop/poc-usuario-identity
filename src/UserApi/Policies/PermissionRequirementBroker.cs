@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace UserApi.Policies
 {
-    internal class PermissionRequirement : IAuthorizationRequirement
+    internal class PermissionRequirementBroker : IAuthorizationRequirement
     {
         public string Permission { get; private set; }
         public string Role { get; private set; }
@@ -12,12 +12,12 @@ namespace UserApi.Policies
             Permission = permission;
         }
 
-        public PermissionRequirement(string role)
+        public PermissionRequirementBroker(string role)
         {
             Role = role;
         }
 
-        public PermissionRequirement(string permission, string role)
+        public PermissionRequirementBroker(string permission, string role)
         {
             Role = role;
             Permission = permission;

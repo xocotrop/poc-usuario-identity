@@ -41,15 +41,34 @@ namespace UserApi
             });
 
             services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+            services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandlerBroker>();
             // services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("Permissions.Geral.ReadAdmin", builder =>
+                options.AddPolicy("Permissions.Geral.ReadAdmin",
+                    //new AuthorizationPolicyBuilder()
+                    //.RequireAuthenticatedUser()
+                    //.RequireAny
+                    //.Build());
+                    builder =>
                 {
-                    builder.AddRequirements(new PermissionRequirement("Permissions.Geral.Read"));
                     builder.RequireRole("Admin");
                 });
 
+                options.AddPolicy("ViewPolicies", builder =>
+                {
+                    //builder.RequireRole("Broker", "Policicyholder");
+                    builder.AddRequirements(new PermissionRequirementBroker("broker"));
+                    builder.AddRequirements(new PermissionRequirement("permission.policyholder.read", "policyholder"));
+                });
+
+                options.AddPolicy("Broker", builder =>
+                {
+                    builder.AddRequirements(new PermissionRequirement("Permissions.Geral.Read"));
+                    builder.AddRequirements(new PermissionRequirement("Permissions.Broker.Read"));
+
+                    //builder.RequireRole("Broker");
+                });
 
                 // The rest omitted for brevity.
             });

@@ -10,12 +10,12 @@ using UserData;
 
 namespace UserApi.Policies
 {
-    internal class PermissionAuthorizationHandler : AuthorizationHandler<PermissionRequirement>
+    internal class PermissionAuthorizationHandlerBroker : AuthorizationHandler<PermissionRequirementBroker>
     {
         UserManager<ApplicationUser> _userManager;
         RoleManager<IdentityRole<Guid>> _roleManager;
 
-        public PermissionAuthorizationHandler(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
+        public PermissionAuthorizationHandlerBroker(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -27,18 +27,22 @@ namespace UserApi.Policies
             return base.HandleAsync(context);
         }
 
-        protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
+        protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirementBroker requirement)
         {
+
+            if (!context.PendingRequirements.Any())
+                return;
+
             if (context.User == null)
             {
                 context.Fail();
                 return;
             }
 
-            if (context.PendingRequirements.Any(p => p is PermissionRequirement) && context.User.IsInRole("Broker"))
+            if (context.PendingRequirements.Any(p => p is PermissionRequirementBroker) && context.User.IsInRole("Broker"))
             {
-                var p = context.PendingRequirements.Where(pr => pr is PermissionRequirement).Cast<PermissionRequirement>().FirstOrDefault(pr => pr.Role == "policyholder");
-                if (!string.IsNullOrWhiteSpace(p?.Permission) && p.Permission == "policyholder.policy.read")
+                var p = context.PendingRequirements.Where(pr => pr is PermissionRequirementBroker).Cast<PermissionRequirementBroker>().FirstOrDefault(pr => pr.Role == "broker");
+                if (string.IsNullOrWhiteSpace(p.Permission))
                 {
                     foreach (var item in context.Requirements)
                     {
